@@ -9,6 +9,7 @@ const userFilePath = path.join(__dirname, '../emailtemplates/userEmail.hbs');
 const adminFilePath = path.join(__dirname, '../emailtemplates/adminEmail.hbs');
 require('dotenv').config();
 
+
 let userTemplate = fs.readFileSync(
   userFilePath,
   "utf-8"
@@ -32,6 +33,33 @@ let transporter = nodemailer.createTransport({
   },
 });
 
+
+// @desc    Register a new admin user
+// @route   POST /api/users
+// @access  Public
+const adminRegister = asyncHandler(async (req, res) => {
+  const { email, password, firstName, lastName } = req.body;
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new Error("User already exists");
+  }
+  const user = await User.create({ email, password, firstName, lastName, role: "admin" });
+  if (user) {
+    res.status(201).json({
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid user data");
+  }
+});
+
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
@@ -49,6 +77,7 @@ const register = asyncHandler(async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      role: user.role,
       token: generateToken(user._id),
     });
   } else {
@@ -71,6 +100,7 @@ const login = asyncHandler(async (req, res) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      role: user.role,
       token: generateToken(user._id),
     });
   } else {
@@ -100,6 +130,7 @@ const update = asyncHandler(async (req, res) => {
       email: updatedUser.email,
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
+      role: user.role,
       token: generateToken(updatedUser._id),
     });
   } else {
@@ -127,6 +158,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
+      role: user.role,
       email: user.email,
     });
   } else {
@@ -144,14 +176,14 @@ const sendEmail = asyncHandler(async (req, res) => {
     let userHtml = compiledUserTemplate({ email, firstName, lastName, city, phone });
     let adminHtml = compiledAdminTemplate({ email, firstName, lastName, city, phone });
 
-    let userInfo = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.COMPANY_EMAIL,
       to: `${email}`,
       subject: "Cyber Security LLC",
       html: userHtml,
     });
 
-    let adminInfo = await transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.COMPANY_EMAIL,
       to: process.env.ADMIN_EMAIL,
       subject: "Cyber Security LLC",
@@ -166,6 +198,7 @@ const sendEmail = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  adminRegister,
   register,
   sendEmail,
   login,

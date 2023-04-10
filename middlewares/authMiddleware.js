@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const asyncHandler = require('express-async-handler')
 const User = require('../models/userModel')
+require('dotenv').config();
 
 const protect = asyncHandler(async (req, res, next) => {
     let token
@@ -9,7 +10,7 @@ const protect = asyncHandler(async (req, res, next) => {
         try{
             token = req.headers.authorization.split(' ')[1]
 
-            const decode = jwt.verify(token, 'secret')
+            const decode = jwt.verify(token, process.env.SECRET_KEY)
             
             req.user = await User.findById(decode.id).select('-password')
             
@@ -22,7 +23,6 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 
     if(!token){
-        console.error(error)
         res.status(401)
         throw new Error('Not authorized, No token')
     }
