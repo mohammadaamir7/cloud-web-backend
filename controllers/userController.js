@@ -171,10 +171,10 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const sendEmail = asyncHandler(async (req, res) => {
-  const { email, firstName, lastName, city, phone } = req.body;
+  const { email, firstName, lastName, city, phone, requirements } = req.body;
   try {
     let userHtml = compiledUserTemplate({ email, firstName, lastName, city, phone });
-    let adminHtml = compiledAdminTemplate({ email, firstName, lastName, city, phone });
+    let adminHtml = compiledAdminTemplate({ email, firstName, lastName, city, phone, requirements });
 
     await transporter.sendMail({
       from: process.env.COMPANY_EMAIL,
